@@ -1,26 +1,42 @@
 import { useEffect, useState } from "react";
 import { db } from "myFirebase";
-import { addDoc, collection, getDocs } from "firebase/firestore";
+import { addDoc, collection, getDocs, onSnapshot, orderBy, query } from "firebase/firestore";
 
-const Home = () => {
+const Home = ( {userObj} ) => {
+  console.log(userObj);
   const [nweet, setNweet] = useState("");
   const [nweets, setNweets] = useState([]);
-  const getNweets = async () => {
+
+  // 이 getNweets는 오래된 방식
+  /* const getNweets = async () => {  
     const querySnapshot = await getDocs(collection(db, "nweets"));
     querySnapshot.forEach((doc) => {
-      setNweets((prev) => [doc.data(), ...prev]); // set에 값대신 함수를 전달
+      const nweetObject = {
+        ...doc.data(),
+        id: doc.id,
+      };
+      setNweets((prev) => [nweetObject, ...prev]); 
     })
-  };
+  }; */ 
+
   useEffect(() => {
-    getNweets();
+    // getNweets();
+    const q = query(collection(db, "nweets"), orderBy("createdAt", "desc"));
+    onSnapshot(q, (querySnapshot) => {
+      const nweetsArr = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      console.log(nweetsArr);
+    });
   }, []);
-  console.log(nweets);
   const onSubmit = async (event) => {
     event.preventDefault();
     try {
       await addDoc(collection(db, "nweets"), {
-        nweets: nweet,
-        createdAt: Date.now()
+        text: nweet,
+        createdAt: Date.now(),
+        creatorId: userObj.uid,
       });
       setNweet("");   // submit하면 다시 빈문자열로 셋팅
     } catch(e) {
@@ -39,6 +55,13 @@ const Home = () => {
         <input value={nweet} onChange={onChange} type="text" placeholder="What's on your mind?" maxLength={120} />
         <input type="submit" value="Nweet" /> 
       </form>
+      <div>
+        {nweets.map((nweet) => (
+            <div key={nweet.id}> 
+              <h4>{nweet.nweets}</h4>
+            </div>
+          ))}
+      </div>
     </div>
   );
 };
