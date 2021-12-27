@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { db } from "myFirebase";
 import { addDoc, collection, getDocs, onSnapshot, orderBy, query } from "firebase/firestore";
+import Nweet from "components/Nweet";
 
+// userObj는 App.js에서 넘겨받은 로그인 한 유저의 Object
 const Home = ( {userObj} ) => {
   console.log(userObj);
   const [nweet, setNweet] = useState("");
@@ -27,7 +29,7 @@ const Home = ( {userObj} ) => {
         id: doc.id,
         ...doc.data(),
       }));
-      console.log(nweetsArr);
+      setNweets(nweetsArr);
     });
   }, []);
   const onSubmit = async (event) => {
@@ -42,6 +44,7 @@ const Home = ( {userObj} ) => {
     } catch(e) {
       console.error("Error adding document", e);
     }
+    console.log(nweet);
   };
   const onChange = (event) => {
     const {
@@ -57,10 +60,8 @@ const Home = ( {userObj} ) => {
       </form>
       <div>
         {nweets.map((nweet) => (
-            <div key={nweet.id}> 
-              <h4>{nweet.nweets}</h4>
-            </div>
-          ))}
+          <Nweet key={nweet.id} nweetObj={nweet} isOwner={nweet.creatorId === userObj.uid} />
+        ))}
       </div>
     </div>
   );
